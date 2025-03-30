@@ -191,20 +191,31 @@
 
     <div class="example-section">
       <h3>Example: Future Returns Calculation</h3>
-      <pre><code>{
-  "scheme_code": "119598",
-  "start_date": "2023-01-01",
-  "end_date": "2025-12-31",  // Future date
-  "amount": 5000,
-  "frequency": "monthly"
-}
+      <pre><code>curl --request POST \
+  --url https://sipcalc-mf-india-api.p.rapidapi.com/calculate-returns \
+  --header 'Content-Type: application/json' \
+  --header 'x-rapidapi-host: sipcalc-mf-india-api.p.rapidapi.com' \
+  --header 'x-rapidapi-key: your-rapidapi-key' \
+  --data '{
+    "scheme_code": "119598",
+    "start_date": "2023-01-01", 
+    "end_date": "2025-12-31",
+    "amount": 5000,
+    "frequency": "daily"
+  }'
 
-Response will include:
+Response:
 {
-  // ... standard return calculations ...
+  "scheme_name": "SBI BLUE CHIP FUND-DIRECT PLAN -GROWTH",
+  "total_investment": 5480000,
+  "current_value": 6030701.71,
+  "absolute_returns": 550701.71,
+  "percentage_returns": 10.05,
   "is_predicted": true,
-  "prediction_confidence": 0.85,
-  "prediction_methodology": "SARIMAX(5,1,1)(1,1,1,5)"
+  "number_of_installments": 1096,
+  "average_nav": 46.91,
+  "highest_nav": 105.79,
+  "lowest_nav": 14.53
 }</code></pre>
     </div>
 
