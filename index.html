@@ -52,11 +52,61 @@
       .feature-card p {
         margin: 0;
         color: #666;
+        line-height: 1.5;
+      }
+      .prediction-section {
+        background: white;
+        padding: 3rem 2rem;
+        text-align: center;
+      }
+      .prediction-section h2 {
+        color: #1e3c72;
+        margin-bottom: 2rem;
+      }
+      .prediction-features {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      .prediction-feature {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 8px;
+        text-align: left;
+      }
+      .prediction-feature h4 {
+        color: #1e3c72;
+        margin: 0 0 1rem;
+      }
+      .prediction-feature ul {
+        margin: 0;
+        padding-left: 1.2rem;
+        color: #666;
+      }
+      .prediction-feature li {
+        margin: 0.5rem 0;
       }
       #swagger-ui {
         margin: 2rem auto;
         max-width: 1200px;
         padding: 0 1rem;
+      }
+      .example-section {
+        background: #f8f9fa;
+        padding: 2rem;
+        margin: 2rem auto;
+        max-width: 1200px;
+      }
+      .example-section pre {
+        background: #fff;
+        padding: 1rem;
+        border-radius: 4px;
+        overflow-x: auto;
+      }
+      .example-section code {
+        font-family: "Monaco", "Consolas", monospace;
       }
     </style>
   </head>
@@ -65,6 +115,7 @@
       <h1>SIPCalc MF India API</h1>
       <p>
         A comprehensive API for Indian Mutual Fund calculations and analysis
+        with SARIMAX predictions
       </p>
     </div>
 
@@ -84,10 +135,10 @@
         </p>
       </div>
       <div class="feature-card">
-        <h3>Performance Analysis</h3>
+        <h3>Future Predictions</h3>
         <p>
-          Get detailed performance metrics, volatility analysis, and historical
-          trends
+          Get AI-powered future NAV predictions using SARIMAX model with
+          seasonal adjustments
         </p>
       </div>
       <div class="feature-card">
@@ -97,6 +148,64 @@
           performance
         </p>
       </div>
+    </div>
+
+    <div class="prediction-section">
+      <h2>Advanced SARIMAX Predictions</h2>
+      <div class="prediction-features">
+        <div class="prediction-feature">
+          <h4>How It Works</h4>
+          <ul>
+            <li>
+              Uses SARIMAX (Seasonal AutoRegressive Integrated Moving Average
+              with eXogenous factors)
+            </li>
+            <li>Analyzes historical patterns and market cycles</li>
+            <li>Considers seasonal market behavior</li>
+            <li>Adapts to market volatility</li>
+            <li>Provides conservative estimates with safety checks</li>
+          </ul>
+        </div>
+        <div class="prediction-feature">
+          <h4>Key Features</h4>
+          <ul>
+            <li>Weekly seasonality (5 trading days)</li>
+            <li>Multiple moving average verification</li>
+            <li>Volatility-based adjustments</li>
+            <li>Confidence scoring</li>
+            <li>Fallback to exponential moving averages</li>
+          </ul>
+        </div>
+        <div class="prediction-feature">
+          <h4>Best Practices</h4>
+          <ul>
+            <li>Use at least 1 year of historical data</li>
+            <li>Best for 6-month prediction horizon</li>
+            <li>Consider market conditions</li>
+            <li>Check prediction confidence scores</li>
+            <li>Monitor is_predicted flag in responses</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="example-section">
+      <h3>Example: Future Returns Calculation</h3>
+      <pre><code>{
+  "scheme_code": "119598",
+  "start_date": "2023-01-01",
+  "end_date": "2025-12-31",  // Future date
+  "amount": 5000,
+  "frequency": "monthly"
+}
+
+Response will include:
+{
+  // ... standard return calculations ...
+  "is_predicted": true,
+  "prediction_confidence": 0.85,
+  "prediction_methodology": "SARIMAX(5,1,1)(1,1,1,5)"
+}</code></pre>
     </div>
 
     <div id="swagger-ui"></div>

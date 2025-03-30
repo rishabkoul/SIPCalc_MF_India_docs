@@ -8,9 +8,25 @@ info:
     ## Features
     - Real-time mutual fund scheme information
     - SIP and Lumpsum investment calculations
-    - Advanced performance analytics
+    - Advanced performance analytics with SARIMAX predictions
     - Multi-scheme comparison
     - Historical NAV analysis
+
+    ## Future Date Predictions
+    The API supports future date predictions for mutual fund returns using SARIMAX (Seasonal AutoRegressive Integrated Moving Average with eXogenous factors) model.
+    When you provide an end_date that is in the future:
+    - The API uses historical NAV data to train a SARIMAX model
+    - Considers seasonal patterns, market cycles, and historical trends
+    - Provides conservative predictions with built-in error handling
+    - Adjusts predictions based on recent market volatility
+    - Uses multiple moving averages for trend verification
+
+    ### Prediction Features
+    - Handles both seasonal and non-seasonal components
+    - Adapts to market volatility
+    - Uses weekly seasonality (5 trading days)
+    - Implements safety checks to prevent unrealistic predictions
+    - Fallback to exponential moving averages if needed
 
     ## Authentication
     This API requires RapidAPI key for authentication. You need to pass your RapidAPI key in the `x-rapidapi-key` header.
@@ -269,27 +285,77 @@ paths:
 
   /calculate-returns:
     post:
-      summary: Calculate Investment Returns
-      description: Calculate returns for SIP or lumpsum investments
+      summary: Calculate SIP or Lumpsum Returns with Future Predictions
+      description: |
+        Calculate returns for SIP or lumpsum investments in mutual funds. This endpoint supports both historical calculations 
+        and future predictions using SARIMAX model.
+
+        ### Future Date Predictions
+        When end_date is set to a future date:
+        - The API uses SARIMAX model for NAV predictions
+        - Predictions are based on historical patterns and market trends
+        - Results include a flag indicating predicted values
+        - Prediction accuracy depends on historical data availability
+        - Conservative estimates are used to prevent overoptimistic projections
+
+        ### Prediction Methodology
+        The SARIMAX model uses:
+        - Order (5,d,1): Standard ARIMA parameters
+        - Seasonal Order (1,1,1,5): Weekly seasonality
+        - Recent volatility for adaptive predictions
+        - Multiple moving averages for trend verification
+        - Built-in safety checks for realistic projections
+
+        ### Best Practices
+        - For most accurate predictions, provide at least 1 year of historical data
+        - Future predictions work best within a 6-month horizon
+        - Consider market conditions when interpreting future predictions
+        - Use is_predicted flag in response to identify predicted values
+      security:
+        - RapidAPI: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/CalculateReturnsRequest"
+            example:
+              scheme_code: "119598"
+              start_date: "2023-01-01"
+              end_date: "2024-12-31" # Future date for predictions
+              amount: 5000
+              frequency: "monthly"
       responses:
         "200":
-          description: Calculated returns
+          description: Investment returns calculation with predictions if applicable
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CalculateReturnsResponse"
+                allOf:
+                  - $ref: "#/components/schemas/CalculateReturnsResponse"
+                  - type: object
+                    properties:
+                      is_predicted:
+                        type: boolean
+                        description: Indicates if future predictions were used
+                        example: true
+                      prediction_confidence:
+                        type: number
+                        format: float
+                        description: Confidence score of the prediction (0-1)
+                        example: 0.85
+                      prediction_methodology:
+                        type: string
+                        description: Method used for prediction
+                        example: "SARIMAX(5,1,1)(1,1,1,5)"
         "400":
-          description: Invalid input parameters
+          description: Invalid request parameters
+        "401":
+          description: Unauthorized - Invalid or missing API key
+        "403":
+          description: Forbidden - API key doesn't have access
         "404":
-          description: Scheme not found
-      security:
-        - RapidAPI: []
+          description: Scheme not found or insufficient data for prediction
 
   /scheme/{scheme_code}:
     get:
