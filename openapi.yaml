@@ -1,0 +1,415 @@
+openapi: 3.0.3
+info:
+  title: SIPCalc MF India API
+  description: |
+    A comprehensive API for Indian Mutual Fund calculations and analysis. This API provides real-time NAV data, 
+    SIP return calculations, and advanced analytics using SARIMA predictions.
+
+    ## Features
+    - Real-time mutual fund scheme information
+    - SIP and Lumpsum investment calculations
+    - Advanced performance analytics
+    - Multi-scheme comparison
+    - Historical NAV analysis
+
+    ## Authentication
+    This API requires RapidAPI key for authentication. You need to pass your RapidAPI key in the `x-rapidapi-key` header.
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: rishabkoul2001@gmail.com
+
+servers:
+  - url: https://sipcalc-mf-india-api.p.rapidapi.com
+    description: Production server
+
+components:
+  securitySchemes:
+    RapidAPI:
+      type: apiKey
+      in: header
+      name: x-rapidapi-key
+      description: Your RapidAPI key for authentication
+
+  schemas:
+    InvestmentFrequency:
+      type: string
+      enum: [daily, weekly, monthly, yearly, lumpsum]
+
+    CalculateReturnsRequest:
+      type: object
+      required:
+        - scheme_code
+        - start_date
+        - end_date
+        - amount
+        - frequency
+      properties:
+        scheme_code:
+          type: string
+          example: "119598"
+        start_date:
+          type: string
+          format: date
+          example: "2023-01-01"
+        end_date:
+          type: string
+          format: date
+          example: "2023-12-31"
+        amount:
+          type: number
+          format: float
+          example: 5000
+        frequency:
+          $ref: "#/components/schemas/InvestmentFrequency"
+
+    CalculateReturnsResponse:
+      type: object
+      properties:
+        scheme_name:
+          type: string
+          example: "Aditya Birla Sun Life Digital India Fund - Growth"
+        total_investment:
+          type: number
+          format: float
+          example: 60000.00
+        current_value:
+          type: number
+          format: float
+          example: 65000.00
+        absolute_returns:
+          type: number
+          format: float
+          example: 5000.00
+        percentage_returns:
+          type: number
+          format: float
+          example: 8.33
+        number_of_installments:
+          type: integer
+          example: 12
+        average_nav:
+          type: number
+          format: float
+          example: 45.67
+        highest_nav:
+          type: number
+          format: float
+          example: 52.10
+        lowest_nav:
+          type: number
+          format: float
+          example: 38.25
+
+    SchemeDetails:
+      type: object
+      properties:
+        scheme_code:
+          type: string
+          example: "119598"
+        scheme_name:
+          type: string
+          example: "Aditya Birla Sun Life Digital India Fund - Growth"
+        scheme_category:
+          type: string
+          example: "Equity Scheme - Sectoral/Thematic"
+        scheme_type:
+          type: string
+          example: "Open Ended"
+        fund_house:
+          type: string
+          example: "Aditya Birla Sun Life Mutual Fund"
+        scheme_start_date:
+          type: string
+          example: "2000-01-01"
+        scheme_nav:
+          type: number
+          format: float
+          example: 245.67
+        scheme_nav_date:
+          type: string
+          example: "2024-03-28"
+
+    NAVHistory:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+          example: "2024-03-28"
+        nav:
+          type: number
+          format: float
+          example: 245.67
+
+    NAVAnalysis:
+      type: object
+      properties:
+        current_nav:
+          type: number
+          format: float
+          example: 245.67
+        nav_date:
+          type: string
+          format: date
+          example: "2024-03-28"
+        change_1_day:
+          type: number
+          format: float
+          example: 0.5
+        change_1_week:
+          type: number
+          format: float
+          example: 1.2
+        change_1_month:
+          type: number
+          format: float
+          example: 3.5
+        change_3_months:
+          type: number
+          format: float
+          example: 8.7
+        change_6_months:
+          type: number
+          format: float
+          example: 15.4
+        change_1_year:
+          type: number
+          format: float
+          example: 25.8
+        highest_nav:
+          type: number
+          format: float
+          example: 250.45
+        highest_nav_date:
+          type: string
+          format: date
+          example: "2024-03-15"
+        lowest_nav:
+          type: number
+          format: float
+          example: 180.23
+        lowest_nav_date:
+          type: string
+          format: date
+          example: "2023-03-28"
+        average_nav_30_days:
+          type: number
+          format: float
+          example: 240.56
+        average_nav_90_days:
+          type: number
+          format: float
+          example: 235.78
+        volatility_30_days:
+          type: number
+          format: float
+          example: 12.5
+
+    ComparisonResult:
+      type: object
+      properties:
+        scheme_code:
+          type: string
+          example: "119598"
+        scheme_name:
+          type: string
+          example: "Aditya Birla Sun Life Digital India Fund - Growth"
+        total_returns:
+          type: number
+          format: float
+          example: 25.8
+        annualized_returns:
+          type: number
+          format: float
+          example: 15.4
+        volatility:
+          type: number
+          format: float
+          example: 12.5
+        sharpe_ratio:
+          type: number
+          format: float
+          example: 1.8
+        max_drawdown:
+          type: number
+          format: float
+          example: -15.6
+
+paths:
+  /schemes:
+    get:
+      summary: Get All Mutual Fund Schemes
+      description: Retrieve all mutual fund schemes with optional search functionality
+      security:
+        - RapidAPI: []
+      parameters:
+        - name: search
+          in: query
+          description: Search term to filter schemes by name
+          required: false
+          schema:
+            type: string
+            example: "aditya"
+      responses:
+        "200":
+          description: List of mutual fund schemes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SchemeDetails"
+        "401":
+          description: Unauthorized - Invalid or missing API key
+        "403":
+          description: Forbidden - API key doesn't have access
+        "404":
+          description: No schemes found
+
+  /calculate-returns:
+    post:
+      summary: Calculate Investment Returns
+      description: Calculate returns for SIP or lumpsum investments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CalculateReturnsRequest"
+      responses:
+        "200":
+          description: Calculated returns
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CalculateReturnsResponse"
+        "400":
+          description: Invalid input parameters
+        "404":
+          description: Scheme not found
+      security:
+        - RapidAPI: []
+
+  /scheme/{scheme_code}:
+    get:
+      summary: Get Scheme Details
+      description: Get detailed information about a specific mutual fund scheme
+      parameters:
+        - name: scheme_code
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "119598"
+      responses:
+        "200":
+          description: Scheme details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SchemeDetails"
+        "404":
+          description: Scheme not found
+      security:
+        - RapidAPI: []
+
+  /scheme/{scheme_code}/nav-history:
+    get:
+      summary: Get NAV History
+      description: Get historical NAV data for a specific period
+      parameters:
+        - name: scheme_code
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "119598"
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+          example: "2023-01-01"
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+          example: "2023-12-31"
+      responses:
+        "200":
+          description: Historical NAV data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NAVHistory"
+        "404":
+          description: Scheme not found or no data available
+      security:
+        - RapidAPI: []
+
+  /scheme/{scheme_code}/analysis:
+    get:
+      summary: Get NAV Analysis
+      description: Get detailed NAV analysis including performance metrics
+      parameters:
+        - name: scheme_code
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "119598"
+      responses:
+        "200":
+          description: NAV analysis
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NAVAnalysis"
+        "404":
+          description: Scheme not found
+      security:
+        - RapidAPI: []
+
+  /compare-schemes:
+    get:
+      summary: Compare Multiple Schemes
+      description: Compare performance metrics of multiple schemes
+      parameters:
+        - name: scheme_codes
+          in: query
+          required: true
+          description: Comma-separated scheme codes
+          schema:
+            type: string
+          example: "119598,120503,120175"
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+          example: "2023-01-01"
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+          example: "2023-12-31"
+      responses:
+        "200":
+          description: Comparison results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ComparisonResult"
+        "400":
+          description: Invalid input parameters
+        "404":
+          description: One or more schemes not found
+      security:
+        - RapidAPI: []
