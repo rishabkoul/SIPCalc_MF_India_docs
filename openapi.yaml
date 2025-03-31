@@ -116,6 +116,14 @@ components:
           type: number
           format: float
           example: 38.25
+        is_predicted:
+          type: boolean
+          example: false
+        day_wise_nav:
+          type: array
+          items:
+            $ref: "#/components/schemas/DayWiseNAVData"
+          description: Day-wise NAV and investment value data (only present if show_day_wise_nav=true)
 
     SchemeDetails:
       type: object
@@ -252,6 +260,30 @@ components:
           format: float
           example: -15.6
 
+    DayWiseNAVData:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+          example: "2024-03-28"
+        nav:
+          type: number
+          format: float
+          example: 245.67
+        current_value:
+          type: number
+          format: float
+          example: 5250.45
+        units_till_date:
+          type: number
+          format: float
+          example: 21.3745
+        is_predicted:
+          type: boolean
+          example: false
+          description: Indicates if this day's NAV is predicted or actual
+
 paths:
   /schemes:
     get:
@@ -285,10 +317,10 @@ paths:
 
   /calculate-returns:
     post:
-      summary: Calculate SIP or Lumpsum Returns with Future Predictions
+      summary: Calculate SIP or Lumpsum Returns with Future Predictions and Day-wise Tracking
       description: |
-        Calculate returns for SIP or lumpsum investments in mutual funds. This endpoint supports both historical calculations 
-        and future predictions using SARIMAX model.
+        Calculate returns for SIP or lumpsum investments in mutual funds. This endpoint supports both historical calculations, 
+        future predictions using SARIMAX model, and optional day-wise NAV tracking.
 
         ### Future Date Predictions
         When end_date is set to a future date:
@@ -297,6 +329,31 @@ paths:
         - Results include a flag indicating predicted values
         - Prediction accuracy depends on historical data availability
         - Conservative estimates are used to prevent overoptimistic projections
+
+        ### Day-wise NAV Tracking
+        When show_day_wise_nav=true:
+        - Returns NAV values for each day in the investment period
+        - Shows investment value progression day by day
+        - Tracks accumulated units over time
+        - Indicates which values are predicted vs actual
+        - Perfect for visualizing investment growth
+        - Useful for detailed analysis and charting
+
+        ### Performance Considerations
+        Using show_day_wise_nav=true can significantly impact response times:
+        - Each day in the date range requires individual calculations
+        - Future dates need additional prediction processing
+        - Large date ranges (several years) will increase response time
+        - Memory usage scales with the date range size
+        - Database load increases with larger ranges
+
+        ### Best Practices for Day-wise Tracking
+        - Use for shorter time periods (< 1 year) for optimal performance
+        - Consider chunking large date ranges into smaller requests
+        - For visualization needs, consider limiting the date range
+        - For long-term analysis, use the basic response format
+        - Monitor response times when dealing with large date ranges
+        - Cache results when possible for frequently accessed ranges
 
         ### Prediction Methodology
         The SARIMAX model uses:
@@ -310,7 +367,16 @@ paths:
         - For most accurate predictions, provide at least 1 year of historical data
         - Future predictions work best within a 6-month horizon
         - Consider market conditions when interpreting future predictions
-        - Use is_predicted flag in response to identify predicted values
+        - Use is_predicted flag to identify predicted values
+        - Day-wise tracking might increase response time for long date ranges
+      parameters:
+        - name: show_day_wise_nav
+          in: query
+          description: Whether to include day-wise NAV and investment value tracking
+          required: false
+          schema:
+            type: boolean
+            default: false
       security:
         - RapidAPI: []
       requestBody:
@@ -322,12 +388,12 @@ paths:
             example:
               scheme_code: "119598"
               start_date: "2023-01-01"
-              end_date: "2024-12-31" # Future date for predictions
+              end_date: "2024-12-31"
               amount: 5000
               frequency: "monthly"
       responses:
         "200":
-          description: Investment returns calculation with predictions if applicable
+          description: Investment returns calculation with optional day-wise tracking
           content:
             application/json:
               schema:
@@ -348,6 +414,31 @@ paths:
                         type: string
                         description: Method used for prediction
                         example: "SARIMAX(5,1,1)(1,1,1,5)"
+              examples:
+                withDayWiseNav:
+                  summary: Response with day-wise NAV tracking
+                  value:
+                    scheme_name: "Aditya Birla Sun Life Digital India Fund - Growth"
+                    total_investment: 60000.00
+                    current_value: 65000.00
+                    absolute_returns: 5000.00
+                    percentage_returns: 8.33
+                    is_predicted: true
+                    number_of_installments: 12
+                    average_nav: 45.67
+                    highest_nav: 52.10
+                    lowest_nav: 38.25
+                    day_wise_nav:
+                      - date: "2023-01-01"
+                        nav: 45.67
+                        current_value: 5000.00
+                        units_till_date: 109.4812
+                        is_predicted: false
+                      - date: "2024-12-31"
+                        nav: 52.10
+                        current_value: 65000.00
+                        units_till_date: 1247.6046
+                        is_predicted: true
         "400":
           description: Invalid request parameters
         "401":
