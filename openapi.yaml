@@ -1,39 +1,43 @@
-openapi: 3.0.0
+openapi: 3.0.3
 info:
-  title: Indian Mutual Fund Investment Calculator API
+  title: SIPCalc MF India API
   description: |
-    A comprehensive API for mutual fund investment calculations, returns analysis, 
-    SIP return calculations, and advanced analytics using multi-timeframe prediction model.
+    A comprehensive API for Indian Mutual Fund calculations and analysis. This API provides real-time NAV data, 
+    SIP return calculations, and advanced analytics using multi-timeframe analysis.
 
-    ## Key Features
-    - Investment return calculations for multiple frequencies
+    ## Features
+    - Real-time mutual fund scheme information
+    - SIP and Lumpsum investment calculations
     - Advanced performance analytics with multi-timeframe predictions
-    - Comprehensive scheme information and comparisons
+    - Multi-scheme comparison
     - Historical NAV analysis
 
-    The API supports future date predictions for mutual fund returns using an advanced multi-timeframe analysis model that combines CAGR, market cycles, and risk-adjusted growth factors.
+    ## Future Date Predictions
+    The API supports future date predictions for mutual fund returns using advanced multi-timeframe analysis.
+    When you provide an end_date that is in the future:
+    - The API analyzes historical NAV data across multiple timeframes (7d, 15d, 30d, 90d)
+    - Incorporates CAGR for long-term projections
+    - Considers market cycles and historical trends
+    - Provides risk-adjusted predictions with dynamic bounds
+    - Uses volatility-based adjustments for realistic projections
 
-    - The API uses historical NAV data to train the prediction model
-    - Supports multiple investment frequencies
-    - Provides comprehensive analytics and comparisons
+    ### Prediction Features
+    - Multi-timeframe analysis for comprehensive trend detection
+    - Adapts to market volatility
+    - Implements market cycle awareness
+    - Uses dynamic risk adjustment
+    - Provides smooth transitions between timeframes
 
     ## Authentication
-    The API uses RapidAPI proxy secret for authentication. Include the secret in the X-RapidAPI-Proxy-Secret header.
-
-    ## Rate Limiting
-    The API is rate limited to 100 requests per second.
-
-    ## Error Handling
-    The API provides detailed error messages and appropriate HTTP status codes.
-
+    This API requires RapidAPI key for authentication. You need to pass your RapidAPI key in the `x-rapidapi-key` header.
   version: 1.0.0
   contact:
     name: API Support
-    email: support@example.com
+    email: rishabkoul2001@gmail.com
 
 servers:
   - url: https://sipcalc-mf-india-api.p.rapidapi.com
-    description: Development server
+    description: Production server
 
 components:
   securitySchemes:
@@ -313,70 +317,136 @@ paths:
 
   /calculate-returns:
     post:
-      summary: Calculate mutual fund investment returns
+      summary: Calculate SIP or Lumpsum Returns with Future Predictions and Day-wise Tracking
       description: |
-        Calculate investment returns for a mutual fund scheme based on investment frequency, 
-        amount, and date range. Supports future date predictions using advanced multi-timeframe analysis, 
-        and optional day-wise NAV tracking.
+        Calculate returns for SIP or lumpsum investments in mutual funds. This endpoint supports both historical calculations, 
+        future predictions using multi-timeframe analysis, and optional day-wise NAV tracking.
 
-        ## Key Features
-        - The API uses an advanced prediction model that combines:
-          - Multi-timeframe analysis (7d, 15d, 30d, 90d)
-          - CAGR-based long-term projections
-          - Market cycle awareness
-          - Dynamic risk adjustment
-          - Volatility-based bounds
-        - Supports multiple investment frequencies
-        - Optional day-wise NAV tracking
-        - Comprehensive return metrics
+        ### Future Date Predictions
+        When end_date is set to a future date:
+        - The API uses multi-timeframe analysis for NAV predictions
+        - Predictions combine short-term momentum and long-term trends
+        - Results include a flag indicating predicted values
+        - Prediction accuracy depends on historical data availability
+        - Risk-adjusted estimates prevent unrealistic projections
 
-        The prediction model provides:
-        - Smooth transitions between timeframes
-        - Realistic growth projections
-        - Risk-adjusted bounds
+        ### Day-wise NAV Tracking
+        When show_day_wise_nav=true:
+        - Returns NAV values for each day in the investment period
+        - Shows investment value progression day by day
+        - Tracks accumulated units over time
+        - Indicates which values are predicted vs actual
+        - Perfect for visualizing investment growth
+        - Useful for detailed analysis and charting
+
+        ### Performance Considerations
+        Using show_day_wise_nav=true can significantly impact response times:
+        - Each day in the date range requires individual calculations
+        - Future dates need additional prediction processing
+        - Large date ranges (several years) will increase response time
+        - Memory usage scales with the date range size
+        - Database load increases with larger ranges
+
+        ### Best Practices for Day-wise Tracking
+        - Use for shorter time periods (< 1 year) for optimal performance
+        - Consider chunking large date ranges into smaller requests
+        - For visualization needs, consider limiting the date range
+        - For long-term analysis, use the basic response format
+        - Monitor response times when dealing with large date ranges
+        - Cache results when possible for frequently accessed ranges
+
+        ### Prediction Methodology
+        The multi-timeframe model uses:
+        - Multiple timeframe analysis (7d, 15d, 30d, 90d)
+        - CAGR-based long-term projections
         - Market cycle awareness
-        - Computational efficiency
+        - Dynamic risk adjustment
+        - Volatility-based bounds
 
-      tags:
-        - calculations
+        ### Best Practices
+        - For most accurate predictions, provide at least 1 year of historical data
+        - Future predictions work best within a 6-month horizon
+        - Consider market conditions when interpreting future predictions
+        - Use is_predicted flag to identify predicted values
+        - Day-wise tracking might increase response time for long date ranges
+      parameters:
+        - name: show_day_wise_nav
+          in: query
+          description: Whether to include day-wise NAV and investment value tracking
+          required: false
+          schema:
+            type: boolean
+            default: false
+      security:
+        - RapidAPI: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/MutualFundRequest"
-      parameters:
-        - in: query
-          name: show_day_wise_nav
-          schema:
-            type: boolean
-          required: false
-          description: Whether to include day-wise NAV and current value data
+              $ref: "#/components/schemas/CalculateReturnsRequest"
+            example:
+              scheme_code: "119598"
+              start_date: "2023-01-01"
+              end_date: "2024-12-31"
+              amount: 5000
+              frequency: "monthly"
       responses:
         "200":
-          description: Successful calculation
+          description: Investment returns calculation with optional day-wise tracking
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/MutualFundResponse"
+                allOf:
+                  - $ref: "#/components/schemas/CalculateReturnsResponse"
+                  - type: object
+                    properties:
+                      is_predicted:
+                        type: boolean
+                        description: Indicates if future predictions were used
+                        example: true
+                      prediction_confidence:
+                        type: number
+                        format: float
+                        description: Confidence score of the prediction (0-1)
+                        example: 0.85
+                      prediction_methodology:
+                        type: string
+                        description: Method used for prediction
+                        example: "Multi-timeframe Analysis (7d, 15d, 30d, 90d)"
+              examples:
+                withDayWiseNav:
+                  summary: Response with day-wise NAV tracking
+                  value:
+                    scheme_name: "Aditya Birla Sun Life Digital India Fund - Growth"
+                    total_investment: 60000.00
+                    current_value: 65000.00
+                    absolute_returns: 5000.00
+                    percentage_returns: 8.33
+                    is_predicted: true
+                    number_of_installments: 12
+                    average_nav: 45.67
+                    highest_nav: 52.10
+                    lowest_nav: 38.25
+                    day_wise_nav:
+                      - date: "2023-01-01"
+                        nav: 45.67
+                        current_value: 5000.00
+                        units_till_date: 109.4812
+                        is_predicted: false
+                      - date: "2024-12-31"
+                        nav: 52.10
+                        current_value: 65000.00
+                        units_till_date: 1247.6046
+                        is_predicted: true
         "400":
-          description: Invalid input
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+          description: Invalid request parameters
+        "401":
+          description: Unauthorized - Invalid or missing API key
+        "403":
+          description: Forbidden - API key doesn't have access
         "404":
-          description: Scheme not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "500":
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+          description: Scheme not found or insufficient data for prediction
 
   /scheme/{scheme_code}:
     get:
