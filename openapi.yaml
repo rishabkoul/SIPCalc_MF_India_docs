@@ -32,7 +32,7 @@ info:
     email: support@example.com
 
 servers:
-  - url: http://localhost:8000
+  - url: https://sipcalc-mf-india-api.p.rapidapi.com
     description: Development server
 
 components:
